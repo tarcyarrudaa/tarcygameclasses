@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>The Family Quest</title>
+<style>
+:root{
+  --ink:#3f3154;
+  --paper:#fff4f8;
+  --panel:#fff8fbea;
+  --shadow:#3924482a;
+  --blue:#7f9ff2;
+  --purple:#a877da;
+  --team:#f09fbf;
+  --teacher:#b67ed6;
+  --rose:#ee7fad;
+  --lilac:#b894e8;
+  --cream:#fff3e8;
+  --mint:#8fd8b7;
+  --sky:#b8dcff;
+  --deep:#3f3154;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#342741;font-family:"Trebuchet MS","Courier New",ui-monospace,monospace;color:var(--ink);overflow:hidden}
+button{font:inherit}
+#app{height:100%;display:grid;place-items:center;padding:10px}
+#shell{position:relative;width:min(96vw,1280px);aspect-ratio:16/9;max-height:94vh;background:#5d4771;border-radius:14px;overflow:hidden;box-shadow:0 26px 70px #1d1328aa;border:4px solid #f3a2c2;image-rendering:pixelated}
+canvas{width:100%;height:100%;display:block;background:#b8dcff;image-rendering:pixelated}
+.screen,.modal,.teacherPanel{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.hidden{display:none!important}
+.screen{z-index:30;background:linear-gradient(180deg,#14384ecc,#112a3fe8);backdrop-filter:blur(4px);padding:30px}
+.card{width:min(760px,90%);background:#fff5f8f5;border-radius:18px;padding:28px;box-shadow:10px 10px 0 #5b3d6f55;border:3px solid #e68fb7}
+.titleCard{text-align:center}
+.title{font-size:clamp(36px,6vw,78px);line-height:.92;margin:0 0 8px;font-weight:900;letter-spacing:-.055em}
+.subtitle{font-size:clamp(16px,2.2vw,26px);margin:0 0 20px;color:#46606f}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#edf5f8;font-weight:800;font-size:13px}
+.row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.bigBtn,.smallBtn{border:0;border-radius:14px;cursor:pointer;font-weight:900;transition:.15s transform,.15s filter;box-shadow:0 7px 0 #0002}
+.bigBtn:hover,.smallBtn:hover{transform:translateY(-1px);filter:brightness(1.03)}
+.bigBtn:active,.smallBtn:active{transform:translateY(2px);box-shadow:0 4px 0 #0002}
+.bigBtn{padding:15px 21px;font-size:18px}
+.smallBtn{padding:10px 12px;font-size:13px}
+.primary{background:#f091bc;color:#4d2f5d}
+.secondary{background:#ead8f4;color:#4b3560}
+.danger{background:#f5c6d8;color:#7d3d5a}
+.teacher{background:#dcbdf0;color:#5b3e72}
+#hud{position:absolute;z-index:10;left:14px;right:14px;top:12px;display:flex;justify-content:space-between;gap:10px;pointer-events:none}
+.hudGroup{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hudPill{background:#fff4f8f7;color:#4d3860;border:3px solid #df89b3;border-radius:8px;padding:7px 11px;font-weight:900;font-size:14px;box-shadow:4px 4px 0 #6a4b7a55;text-shadow:0 1px 0 #fff}
+#teacherBtn,#muteBtn{pointer-events:auto;border:3px solid #865ba6;border-radius:10px;background:#d8b3ef;color:#3f3154;font-weight:900;padding:7px 10px;cursor:pointer;box-shadow:4px 4px 0 #50365f55}
+#worldBanner{position:absolute;z-index:14;left:50%;top:80px;transform:translateX(-50%);background:#fff1f7f3;padding:11px 17px;border-radius:10px;border:3px solid #e58bb4;font-weight:950;box-shadow:5px 5px 0 #5c426e55;opacity:0;transition:.35s;pointer-events:none}
+#worldBanner.show{opacity:1;transform:translateX(-50%) translateY(5px)}
+.modal{z-index:24;background:#0a1722aa;backdrop-filter:blur(3px);padding:20px}
+.challengeCard{width:min(800px,92%);max-height:87%;overflow:auto;background:#fff4f8;border-radius:14px;box-shadow:10px 10px 0 #4e375f66;border:4px solid #da7fab;padding:22px}
+.roleBanner{display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:15px;padding:11px 14px;color:#fff;font-weight:950;margin-bottom:14px}
+.role-p1{background:linear-gradient(90deg,#6f8fe6,#8fb5ff)}
+.role-p2{background:linear-gradient(90deg,#9b68c8,#c49ce9)}
+.role-team{background:linear-gradient(90deg,#dd7ba6,#f2a4c6)}
+.role-teacher{background:linear-gradient(90deg,#b074ca,#d1a4e4)}
+.challengeType{font-size:12px;opacity:.88;letter-spacing:.08em}
+.question{font-size:clamp(22px,3.1vw,34px);line-height:1.18;font-weight:950;letter-spacing:-.025em;margin:12px 0}
+.context{font-size:16px;line-height:1.45;padding:12px 14px;border-radius:14px;background:#f0f5f7;margin:8px 0 14px}
+.options{display:grid;gap:10px;margin-top:14px}
+.option{border:3px solid #d8aec4;background:#fffafd;border-radius:10px;padding:13px 14px;text-align:left;font-weight:900;font-size:17px;cursor:pointer;box-shadow:3px 3px 0 #8b678255}
+.option:hover{border-color:#9cb4c0;background:#f8fbfc}
+.option.correct{background:#dff3e5;border-color:#5ba675}
+.option.wrong{background:#f8dddd;border-color:#c96363}
+.feedback{min-height:34px;margin-top:12px;border-radius:12px;padding:9px 11px;font-weight:850}
+.feedback:empty{padding:0}
+.hint{background:#fff2c9;color:#664d00}
+.good{background:#dff3e5;color:#23613a}
+.bad{background:#f8dddd;color:#792d2d}
+.familyTree{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.person{flex:1 1 130px;min-width:120px;border:1px solid #dce5e7;border-radius:14px;padding:10px;background:#fafcfd;text-align:center}
+.person b{display:block}
+.speakingBox{padding:15px;border:2px dashed #b8c6cc;border-radius:16px;background:#f8fbfc;margin:12px 0;font-size:17px;line-height:1.5}
+.bossBarWrap{margin:10px 0 14px}
+.bossLabel{display:flex;justify-content:space-between;font-weight:900;margin-bottom:6px}
+.bossBar{height:16px;background:#ead7d2;border-radius:999px;overflow:hidden}
+.bossFill{height:100%;background:linear-gradient(90deg,#d95757,#ef8d4c);transition:.35s;width:100%}
+.teacherPanel{z-index:35;background:#0d1924bf;backdrop-filter:blur(5px);padding:20px}
+.teacherCard{width:min(680px,92%);background:#fffdf7;border-radius:24px;padding:22px;box-shadow:0 25px 80px #0009}
+.teacherGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.teacherGrid button{border:0;border-radius:14px;padding:12px;font-weight:900;cursor:pointer;background:#eaf1f4}
+#toast{position:absolute;z-index:50;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#12232dcc;color:#fff;border:1px solid #ffffff22;border-radius:999px;padding:10px 16px;font-weight:850;opacity:0;transition:.22s;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#touchControls{position:absolute;z-index:12;left:12px;right:12px;bottom:12px;display:none;justify-content:space-between;pointer-events:none}
+.touchCluster{display:flex;gap:8px}
+.touchBtn{pointer-events:auto;width:52px;height:52px;border:0;border-radius:50%;background:#0e1c25b5;color:#fff;font-size:22px;font-weight:900;backdrop-filter:blur(8px)}
+.helpList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;text-align:left;margin:18px 0}
+.helpItem{background:#eef4f6;border-radius:14px;padding:12px;font-weight:800}
+.statGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+.stat{background:#eef4f6;border-radius:15px;padding:14px;text-align:center}
+.stat strong{font-size:25px;display:block}
+.rank{font-size:28px;font-weight:950;margin:12px 0}
+@media(max-width:820px){
+  #app{padding:0}
+  #shell{width:100vw;height:100vh;max-height:none;aspect-ratio:auto;border-radius:0}
+  #touchControls{display:flex}
+  .hudPill{font-size:12px;padding:7px 9px}
+  .teacherGrid{grid-template-columns:1fr}
+  .helpList{grid-template-columns:1fr}
+  .statGrid{grid-template-columns:1fr 1fr}
+}
+</style>
+
+<style>
+#hud{top:10px;left:10px;right:10px}
+.hudGroup{gap:6px}
+.hudPill,#teacherBtn,#muteBtn,.roleBanner,.challengeCard,.teacherCard,.option,.bigBtn,.smallBtn{
+  letter-spacing:.02em;
+}
+.hudPill{border-radius:8px;box-shadow:4px 4px 0 #5b406966}
+#worldBanner{font-family:"Courier New",monospace;letter-spacing:.06em}
+.question{font-family:"Trebuchet MS","Courier New",monospace}
+.option{box-shadow:3px 3px 0 #9a6f8b44}
+.challengeCard{background:linear-gradient(#fff7fa,#ffeef5)}
+.teacherCard{background:linear-gradient(#fff8fb,#f2e7fa);border:4px solid #a97cc6;border-radius:16px;box-shadow:8px 8px 0 #50385f66}
+.teacherGrid button{border:2px solid #9d78b4;background:#eadcf4;color:#4a355a;box-shadow:3px 3px 0 #65497655}
+#toast{border-radius:9px;background:#5e4770e8;border:2px solid #efb4d1}
+</style>
+
+</head>
+<body>
+<div id="app">
+  <div id="shell">
+    <canvas id="game" width="1280" height="720"></canvas>
+
+    <div id="hud" class="hidden">
+      <div class="hudGroup">
+        <div class="hudPill" id="lives">❤️❤️❤️</div>
+        <div class="hudPill">⭐ <span id="score">0</span></div>
+        <div class="hudPill">💎 <span id="gems">0</span></div>
+        <div class="hudPill">🗺 <span id="worldName">Family Forest</span></div>
+      </div>
+      <div class="hudGroup">
+        <button id="muteBtn">🔊</button>
+        <button id="teacherBtn">⚙️ TEACHER</button>
+      </div>
+    </div>
+
+    <div id="worldBanner">WORLD 1 — FAMILY FOREST</div>
+
+    <div id="startScreen" class="screen">
+      <div class="card titleCard">
+        <div class="badge">🎮 15-minute cooperative classroom game • Pixel Garden V6</div>
+        <h1 class="title">THE FAMILY<br>QUEST</h1>
+        <p class="subtitle">A Cooperative English Adventure</p>
+        <div class="row">
+          <button class="bigBtn primary" id="startBtn">▶ START ADVENTURE</button>
+          <button class="bigBtn secondary" id="howBtn">📖 HOW TO PLAY</button>
+        </div>
+        <p style="margin:18px 0 0;color:#60727c;font-weight:750">Teacher controls the explorer. Player 1, Player 2 and the team unlock the world by speaking English.</p>
+      </div>
+    </div>
+
+    <div id="howScreen" class="screen hidden">
+      <div class="card">
+        <h2 style="margin-top:0;font-size:34px">How to play</h2>
+        <div class="helpList">
+          <div class="helpItem">🎮 <b>Teacher:</b> move with A/D or ←/→ and jump with W, ↑ or Space.</div>
+          <div class="helpItem">🔵 <b>Player 1:</b> answers blue challenges.</div>
+          <div class="helpItem">🟣 <b>Player 2:</b> answers purple challenges.</div>
+          <div class="helpItem">🤝 <b>Team:</b> discuss together before the teacher clicks.</div>
+          <div class="helpItem">🎤 <b>Speaking:</b> students answer aloud; the teacher accepts or asks them to try again.</div>
+          <div class="helpItem">🏆 <b>Goal:</b> collect gems, unlock all three worlds and defeat the Grammar Guardian.</div>
+        </div>
+        <div class="row"><button class="bigBtn primary" id="backBtn">← BACK</button></div>
+      </div>
+    </div>
+
+    <div id="challengeModal" class="modal hidden">
+      <div class="challengeCard">
+        <div id="roleBanner" class="roleBanner role-p1">
+          <span id="roleLabel">🔵 PLAYER 1</span>
+          <span id="typeLabel" class="challengeType">MULTIPLE CHOICE</span>
+        </div>
+        <div id="bossWrap" class="bossBarWrap hidden">
+          <div class="bossLabel"><span>👑 GRAMMAR GUARDIAN</span><span id="bossHearts">❤️❤️❤️❤️❤️</span></div>
+          <div class="bossBar"><div id="bossFill" class="bossFill"></div></div>
+        </div>
+        <div id="context" class="context hidden"></div>
+        <div id="tree" class="familyTree hidden"></div>
+        <div id="question" class="question"></div>
+        <div id="speaking" class="speakingBox hidden"></div>
+        <div id="options" class="options"></div>
+        <div id="feedback" class="feedback"></div>
+        <div class="row" id="actionRow" style="justify-content:flex-start;margin-top:12px"></div>
+      </div>
+    </div>
+
+    <div id="teacherPanel" class="teacherPanel hidden">
+      <div class="teacherCard">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <div>
+            <div class="badge">🎓 GAME MASTER</div>
+            <h2 style="margin:7px 0 0">Teacher Panel</h2>
+          </div>
+          <button class="smallBtn secondary" id="closeTeacher">✕ CLOSE</button>
+        </div>
+        <div class="teacherGrid">
+          <button data-act="resume">▶ Resume</button>
+          <button data-act="skip">⏭ Skip challenge</button>
+          <button data-act="newq">🔄 New question</button>
+          <button data-act="hint">💡 Show hint</button>
+          <button data-act="reveal">👁 Reveal answer</button>
+          <button data-act="life">❤️ Add life</button>
+          <button data-act="points">➕ Add 100 points</button>
+          <button data-act="checkpoint">🚩 Next checkpoint</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="victoryScreen" class="screen hidden">
+      <div class="card titleCard">
+        <div style="font-size:52px">🏆</div>
+        <h1 style="margin:0;font-size:44px">MISSION COMPLETE!</h1>
+        <p style="font-size:18px;color:#566b77">The Grammar Guardian has been defeated.</p>
+        <div class="statGrid">
+          <div class="stat"><strong id="finalScore">0</strong>Team Score</div>
+          <div class="stat"><strong id="finalAcc">0%</strong>Accuracy</div>
+          <div class="stat"><strong id="finalGems">0</strong>Collectibles</div>
+          <div class="stat"><strong id="finalLives">0</strong>Lives left</div>
+          <div class="stat"><strong id="finalSpeaking">0</strong>Speaking</div>
+          <div class="stat"><strong id="finalCorrect">0</strong>Correct</div>
+        </div>
+        <div class="rank" id="rank">⭐ FAMILY ADVENTURERS</div>
+        <div class="row">
+          <button class="bigBtn primary" id="playAgainBtn">▶ PLAY AGAIN</button>
+          <button class="bigBtn secondary" id="newQuestionsBtn">🔄 NEW QUESTIONS</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast">Checkpoint!</div>
+
+    <div id="touchControls">
+      <div class="touchCluster">
+        <button class="touchBtn" data-key="ArrowLeft">←</button>
+        <button class="touchBtn" data-key="ArrowRight">→</button>
+      </div>
+      <div class="touchCluster">
+        <button class="touchBtn" data-key="Space">↑</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+"use strict";
+
+const ART = {
+  cat: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAAwCAYAAACWqXFuAAADrElEQVR4nO2cMWgUQRSG34YTRFGuDTbB4rRKQCxsAqmUxDTXWRyBkBDU9hrJ1RdESKsSIgciYpcmJNgJNhYinJVeISmUtEGICIJnESbu7c7szc7szPybfR8EssvszH//m3vzZvfuIjLk16e1Yfz4wo2tSHZO1dZ0XBtQdKi0IPnnS1/NRmScpAjVOV/kMQVhYqL5l8SVvsImIDroAa4qE6EFMNUmVwZcby4UkjHi/Wzs7AWrw3yD7l8IfUYZsLPcNbmssOtVrDcXhuIPoR8VqP4V1X+e641rwOH3B6f/d3udzJm+3lwYujYtzslYz6yu7/Y6xQmSgOwfkT99TjYhCEsseoCzQPAviyL1FbYJEUvWl61HI8uWOO72Os6zii6ul1gT0P1zpa8yu2D0AFcVoyXYJlAcZHz/fOqrEam338n1fWl+WtrJy/3P2gMm+9jY2dO+VhffAUb3D1lfKZ6EIBvI2FGZGpDBJFcGTGaS/o/LtPv+FfW3W0REtLk6RUTpLCLaLc62qL19QDNXflpILi/o/oXQZ70EL862Cm1nA3qAZSD5ZzOuqb4zvwSjB7jqZGZAcY/s+trjiCidOdrbByPHk42GoqfRdvF+znKRj+4fgr5S7IJVIBjI2FEjOrmdkXxCoMPm6pQ0qB/e/CYiolv3zhMR0esnt4mI6HAwMFcKDLp/yPpKkQGRDWTscDIBRWAZM9D9K1Kf1gQ0yT66JOs4H/gOMLp/IfVZZ0CEZQs9wFkg+JeFa32lqAFtQA9w1Um9q2UP/mUP+evHcyPHH/9eVQ5yc+LbyPHRxXepNuMyjMssp4NuBkT1T6VP9QGOovURyTWWJgMK8aECzLjhzD+KY7DhCcgEhScgE5RUDSj7mt3S/DTMt8fQQfdP8inyoNpy3dt6e//pkIho5lq6oM9T5BMR9b+enLvz/KH1/TXZDjnULjMLVP9C6jPaBYvO45yj9LnT9iaD5EBMjiwD81A/nnMSYAGaf6nxPOorzW2YPKAHmPnP2Hf37ubAW42w2G5YZRuRAYvENgOi+xdaX+kzYNzAP477t32DMGn4NgwTFJ6ATFDGLinDo0NvNUJUnyxdDTMOdP9U+jrLK9L23d4L47YyfaWvAe+uXPI3WNvfUFWBl2AmKFa7Op0fDdL9YSFT0Jc4FXl8ce2hjKwf79SJb7KdCuMXMC7wUX0y0mljOr4ONpPTpbY8voTyUDWxRF0Xj6+qBuQJyBPQGF/x5RqQCQpPQIZhGIYJwj+2Fuy8kK2Q0wAAAABJRU5ErkJggg==",
+  tile: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABK0lEQVR4nO2YwQ2CQBRExViB8UKswWqsww4swKtNGPuxA6PxYmxBzyQuBNjN+zDzbmYNTh6zf5Hq+rh8F8Is6QA0FkAHoJEXsLq9nnQGFDcgtbCrt43PQ5sS/TryDbAAOgCNvIBVdbr/Xzk3h0Xye11Ev85xf/CfIWUsgA5AIy8g+Sici3qzTq693p/SP9+JG5BaiH7nciHfAHkBxYdg9O3iBqQWot+5XLgBdIA+lDia5RtgAXQAGnkBkxqCJY5m+QZYAB2AxgLoADTyAgYdg3N6XeYG0AFy07ed8g2QFzBoC0xt0LXhBtABctO3nSEEkM8V8lvAAugANPICQgxB8rlCvgEWQAegkRdQbAhO5a1RiFNgLGNky28BC6AD0BSbAZEGXRuzGIJjZP8A0U1IdRzChcgAAAAASUVORK5CYII=",
+  stone: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAA50lEQVR4nO3bwQ0BURhFYWRaENrRgA60owhFaMPCRhlEEWxtJBJjvsi9p4D3Tk7+2fx5Mz/sj49ZMAstoGkALaBpAC2gaQAtoBnOl5N2oMRPQANoAU0DaAFNA2gBzXC7X7UDJX4C4gMMq+V6lINeP6WxzpzirvgJaAAtoGkALaBpAC2gaQAtoGkALaBpAC2gaQAtoIkP8JOd4JR7xm/vip+A+AAf7wSn2Pn98o53Z8dPQANoAU0DaAFNA2gBTQNoAU0DaAFNA2gBTXyA+Xaz619jycQHGO2V2L8SPwENoAU0DaAFNPEBnhkwImEExxFyAAAAAElFTkSuQmCC",
+  tree: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAAC+CAYAAADX/va5AAAC9klEQVR4nO3dPU4VYRiA0cHYUtmJhXtgGZi4BntrtmBCbe8GbExkA/bswULsrFgA1nqJwr33md9zypsQJuGZ9/uYHxgGAAAAAAAAAIA5O5n6AA51e3V9P/UxTO3s8mJ2P8dnUx8A6yQsEsIiISwSwiIhLBLCIvF86gMY0+mrF1MfwnD349fUhzAKE4uEsEgIi4SwSAiLhLBICIvEpq5j/e30/PXOZ3c330c/jjUysUgIi4SwSAiLxKY372vZqE/1Qsm/XuIwsUgIi8TBS6H3+niIiUVCWCSERUJYJIRFQlgk8ivvc3jlivFt+pbOYx3zua25nmjHft/RUkhCWCQmXQo9Grxe9lgztuQTb1Nh7btBPdbGdq4b94I9FglhkZh0KVzKfoGn29Qea2mWfOJZCkkIi4SwSAiLhLBICIuEsEgIi4SwSAiLhFs6I3j59nznsyXfrnkME4uEsEhYCldmLo8zm1gkTKwR/PxyMwyDZ97hYPnE2sq/quVPlsKVmcv1MWGNaEvT2x6LhLBILGopnMuv61ta0vZlYpEQFglhkRAWCWGREBYJYZEQFolFXSDd11yeqtwSE4uEsEgIi4SwSGxi826jPr6Dwzq7vDjZ92tvr67vD/3+zJOlkISwSAiLxCY273Pz4dvnnc8+fv209151jkwsEsIiISwSi9pjee1qOUwsEsIiISwSwiIhLBLCIiEsEou6jrUWa7sv+BATi4SwSAiLhLBICIuEsEgIi4SwSAiLhLBICIuEsEgIi8Tq77I/xfs3747y12+28PTC/5hYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSEReI3JL1Wv89ZRYIAAAAASUVORK5CYII=",
+  castle: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAL4AAAC+CAYAAACLdLWdAAAE20lEQVR4nO3dMYtcVQCG4RuxSWGIIIiCFrZCsBQbEVsREf0LNsHGQixTioVNsPEvKCJia2EjlhKwtREUQTDEImUslsVlk83O3HvOueec73nqzOyde979mEwYsiwAAAAAAAAAAACT+/LD7x7sfQ2pntj7AlKdRi/+fQifSMLfwfmVt/rtCb+xiyIXf1vCb+iyuMXfjvCJJPxGDl1zq9+G8Bs4Nmbx1yf8ytZGLP66hE8k4Ve0dbWtfj3Cr6RUtOKvQ/gVlI5V/OUJn0jCL6zWOlv9soRfUO04xV+O8AtpFaX4yxA+kYRfQOsVtvrbCX+jvSIU/zbCJ5LwN9h7dff++SMT/kq9RNfLdYxG+Cv0Fltv1zMC4RNJ+EfqdV17va5eCf8IvcfV+/X1RPgHGiWqUa5zb8InkvAPMNqKjna9exD+JUaNaNTrbkX4jzF6PKNff03CJ5LwLzDLWs7yOkoT/iPMFstsr6cE4Z8zaySzvq61hE8k4Z8x+yrO/vqOcWXvC+jJn3f+mD6M524878wXi08o4RNJ+EQSPpG6Ct+nDvPq7Wy7Cf/0xvR2g9iux7PtJnxoqYvwzy9BT8vANr2ebRfhQ2u7h3/RAvSyDKzX89nuHj7sYdfwL/vN72EZWKf3s7X4RNot/EN/4/deBo43wtkOsfjin9deZ7tL+EKe1yhnO8TiL8s4N5Tj7XG2zcMX8LxGOtvmX0PbenNef//lUpfykGvXr1Z77l7cu3u/2nP/+NWvmx7/we23m/XYdPFHWgSOszX61oZ5j39qtBvM4VoOY7Pwrf28Rhyj4RZ/Wca80Rym1UA2Cb/GixF/H2qcQ4v4q4fvLc68Rh6fId/qnBr5xvN4tQezavjWfl6jj87Qi78s4x8AF6s5nNXCt/bzmmFshl/8ZZnjIHi0WgNaJXxrP69ZRmaKxV+WeQ6Eh9UY0uLh77n24q9rz/tbuqtpFh+OUTT8Ht7bW/06erivJfuy+EQq9o2XHtb+rDXf1KrxDawrP9xZ9bgHb94ofCUn1nwDq4e1P6vEN7UsPpGKhN/b2i9Lfys1qh7vY4nenixxIfxv7Vuby56n1lufVJsXv8e1P9XjWo2k5/u3tbvNi3/jjRe3PgWd6v5sb69/qL/cEkn4RBI+kXyqU9j5T196+wcsTgi/srMBX/ZLIPZ2vNUhkvCJJHwiCZ9IwieST3Ua8qlNPyw+kYRPJOETSfhEEj6RhE8k4ROp+ef433/90+rHvvXeawWvpIwvPv129WNvfvJOtz/rGCOeqcUnkvCJJHwiCZ9IwieS8IkkfCIJn0jCJ5LwiSR8IgmfSMInkvCJJHwiCZ9IwieS8IkkfCIJn0hXtj7Bz9/80u1/8Lwsy/L0M08d/GevXb9a8Ur6cO/u/YP/7D9//1vxSrZ79d1XVvdr8YkkfCIJn0jCJ5LwiSR8IgmfSMInkvCJJHwiCZ9IwieS/9m8kM9ufd7sZ31866NmP2tWFp9IwieS8IkkfCL5y20lv/31e7HneunZF4o9FycsPpGETyThE0n4RBI+kYRPJOETSfhEEj6RhE8k4RNJ+EQSPpGETyThE0n4RBI+kYRPJOETSfhEEj6RhE8k4RNJ+EQSPpGETyThE0n4RBI+kYRPJOETSfhEEj6RhE8k4RNJ+EQSPkCK/wC7eKL3uPLl0gAAAABJRU5ErkJggg==",
+  enemy: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAcCAYAAAAEN20fAAAAjUlEQVR4nGNgGAWjYIgARnyS11e8+k9NyzQjxHDax0RNiygBow5BByhxdrTrAUqaEJLjoqpl7x59Q+FblynA7R80ITLqEHQwaBzCQoyikr48FH5P0SSq6xk0ITLqEHQwWqChg0HjEKKyLzrYsmkHQTU+fh4kmTloQmTQOISsqCE12IkBeB2Cnt1GAT0BAG3aHtj9g5aQAAAAAElFTkSuQmCC",
+  flag: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACYAAABECAYAAADtAUf/AAAAz0lEQVR4nO3ZIQ6CUByA8aczeQE9h51mcEQPYTC4uXEMksHgIYwmm917eAGrNoIK+Cls//D9Ig/Gt8cbG4+UJOkrg7YTiuXm8XqsPO5ar/vXsO8b/Cps2IheUGR5KrL87fF2YbpdVEsk7IwZRuE1Rk3W89qx2/5cOxZ2xgyjDKMMowyjen/zN73dm4SdMcOosGF48ZeXk19JIRlGGUYZRhlGGUYZRhlGGUYZRhlGGUYZRhlGGUYZRn3cgLtfV+if93h26HwjL+yMGUaFDQvrCTY6FVNN80h+AAAAAElFTkSuQmCC",
+  cloud: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAAAcCAYAAADC8vmmAAAAdUlEQVR4nO3WQQqAIBQAUY0P3sb7n6PbBEHtot0g8RNq3lpRBlFLkZSozt7A3bHta/YatUUfGb9kbeQrDAQMBOLJ5DfujNk8QcBAwEDAQMBA4PpJ/+FFGlVbdE8QMBAwEDAQMBAwEDAQMBAwEDAQMBAwkJTqBHjeC/XzzjiyAAAAAElFTkSuQmCC",
+  bird: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAKCAYAAAC0VX7mAAAATUlEQVR4nGNgGAUw4G0W8R+ZJiQOA4z4DEMGW0+tYMQljsxnwmcYumJs4uiW4JTApQmfYVtPrWBkJMZVpMgzkeJFYoIAq9PJBd5mEf8B/S87aAF5b/oAAAAASUVORK5CYII="
+};
+const IMG={};
+for(const [k,v] of Object.entries(ART)){ IMG[k]=new Image(); IMG[k].src=v; }
+
+
+/* ---------- DOM ---------- */
+const $ = s => document.querySelector(s);
+const canvas = $("#game"), ctx = canvas.getContext("2d");
+const startScreen=$("#startScreen"), howScreen=$("#howScreen"), victoryScreen=$("#victoryScreen");
+const challengeModal=$("#challengeModal"), teacherPanel=$("#teacherPanel");
+const hud=$("#hud"), worldBanner=$("#worldBanner"), toast=$("#toast");
+const roleBanner=$("#roleBanner"), roleLabel=$("#roleLabel"), typeLabel=$("#typeLabel");
+const questionEl=$("#question"), contextEl=$("#context"), optionsEl=$("#options"), feedbackEl=$("#feedback");
+const actionRow=$("#actionRow"), speakingEl=$("#speaking"), treeEl=$("#tree");
+const bossWrap=$("#bossWrap"), bossFill=$("#bossFill"), bossHearts=$("#bossHearts");
+const scoreEl=$("#score"), gemsEl=$("#gems"), livesEl=$("#lives"), worldNameEl=$("#worldName");
+
+let audioOn=true, audioCtx=null;
+function beep(freq=440,dur=.07,type="sine",gain=.05){
+  if(!audioOn) return;
+  try{
+    audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type=type; o.frequency.value=freq; g.gain.value=gain;
+    o.connect(g); g.connect(audioCtx.destination); o.start();
+    g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+dur);
+    o.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+$("#muteBtn").onclick=()=>{audioOn=!audioOn;$("#muteBtn").textContent=audioOn?"🔊":"🔇";beep(560,.05)};
+function showToast(t){
+  toast.textContent=t;toast.classList.add("show");
+  setTimeout(()=>toast.classList.remove("show"),1300);
+}
+
+/* ---------- Questions ---------- */
+const FAMILY=[
+ {type:"mc",q:"My mother's brother is my ____.",o:["cousin","uncle","grandfather"],a:1,h:"Your mother's brother is a man from your parents' generation."},
+ {type:"say",q:"My father's mother is my ____.",aText:"grandmother",h:"Think about your father's parents."},
+ {type:"mc",q:"Anna and Tom have two children. Anna is their ____.",o:["sister","mother","aunt"],a:1,h:"Anna is one of the two parents."},
+ {type:"mc",q:"My aunt's son is my ____.",o:["cousin","brother","uncle"],a:0,h:"Your aunt's child has this relationship to you."},
+ {type:"say",q:"My parents' parents are my ____.",aText:"grandparents",h:"It is the plural family word for grandmother and grandfather."},
+ {type:"mc",q:"A husband and a wife are ____.",o:["siblings","married","cousins"],a:1,h:"They are a married couple."},
+ {type:"mc",q:"My mother's daughter, who is not me, is my ____.",o:["sister","aunt","cousin"],a:0,h:"You share at least one parent."},
+ {type:"say",q:"My uncle's daughter is my ____.",aText:"cousin",h:"She is the child of your aunt or uncle."},
+ {type:"mc",q:"A mother and a father are ____.",o:["parents","children","cousins"],a:0,h:"This word refers to the adults who have children."},
+ {type:"fix",q:"Fix the sentence:",context:"My father and mother is my parents.",aText:"My father and mother are my parents.",h:"The subject has two people, so use the plural form of BE."}
+];
+const REL=[
+ {type:"tree",q:"Who is Sarah to Emma?",context:"Emma is Daniel's daughter. Daniel is Sarah's brother.",aText:"Sarah is Emma's aunt.",h:"Sarah is the sister of Emma's father.",people:[["Emma","Daniel's daughter"],["Daniel","Sarah's brother"],["Sarah","Daniel's sister"]]},
+ {type:"mc",q:"Lucy and Ben have the same parents. They are ____.",o:["siblings","grandparents","cousins"],a:0,h:"They share their parents."},
+ {type:"tree",q:"Who is Peter to Chloe?",context:"Peter is Mary's husband. Mary is Chloe's mother.",aText:"Peter is Chloe's father.",h:"Mary is Chloe's mother and Peter is Mary's husband.",people:[["Peter","Mary's husband"],["Mary","Chloe's mother"],["Chloe","Mary's daughter"]]},
+ {type:"mc",q:"Olivia is Jack's mother. Jack is Mia's father. Olivia is Mia's ____.",o:["aunt","grandmother","cousin"],a:1,h:"Olivia is the mother of Mia's father."},
+ {type:"say",q:"Leo is my father's brother. Leo is my ____.",aText:"uncle",h:"Your father's brother has this relationship to you."},
+ {type:"tree",q:"What is Noah's relationship to Ava?",context:"Ava and Noah are both children of Grace and Henry.",aText:"Noah is Ava's brother.",h:"They have the same mother and father.",people:[["Grace","mother"],["Henry","father"],["Ava","daughter"],["Noah","son"]]},
+ {type:"mc",q:"Carla is Nina's sister. Nina has a son called Max. Carla is Max's ____.",o:["aunt","mother","cousin"],a:0,h:"Carla is the sister of Max's mother."},
+ {type:"say",q:"Eva is Ben's wife. Ben is Eva's ____.",aText:"husband",h:"The male partner in a marriage."},
+ {type:"mc",q:"Tom is Alice's son. Alice is Tom's ____.",o:["mother","sister","daughter"],a:0,h:"Tom is her child."},
+ {type:"tree",q:"Who is Lucas to Emma?",context:"Lucas is Daniel's son. Emma is Daniel's daughter.",aText:"Lucas is Emma's brother.",h:"They have the same father.",people:[["Daniel","father"],["Lucas","son"],["Emma","daughter"]]}
+];
+const POSS=[
+ {type:"mc",q:"This backpack belongs to Sarah. It is ____.",o:["her","hers","she"],a:1,h:"There is no noun after the blank, so use a possessive pronoun."},
+ {type:"mc",q:"This is ____ bedroom.",o:["their","theirs","them"],a:0,h:"A noun follows the blank, so use a possessive adjective."},
+ {type:"fix",q:"Fix the sentence:",context:"This phone is her.",aText:"This phone is hers.",h:"Without a noun after it, use HERS."},
+ {type:"say",q:"We live here. This is ____ house.",aText:"our",h:"A noun follows the blank."},
+ {type:"say",q:"This house belongs to us. This house is ____.",aText:"ours",h:"There is no noun after the blank."},
+ {type:"mc",q:"Daniel has a laptop. This is ____ laptop.",o:["his","him","he"],a:0,h:"A noun follows the blank."},
+ {type:"mc",q:"That red car belongs to me. It is ____.",o:["my","mine","me"],a:1,h:"No noun comes after the blank."},
+ {type:"fix",q:"Fix the sentence:",context:"These books are their.",aText:"These books are theirs.",h:"Use THEIRS when the noun is not repeated."},
+ {type:"mc",q:"Emma and I made this project. It is ____ project.",o:["ours","our","their"],a:1,h:"PROJECT is a noun, so use a possessive adjective."},
+ {type:"mc",q:"You own this notebook. The notebook is ____.",o:["your","yours","you"],a:1,h:"No noun follows the blank."}
+];
+const MIXED=[
+ {type:"mc",q:"Emma is John's daughter. Lucy is John's sister. Lucy is Emma's ____.",o:["aunt","mother","cousin"],a:0,h:"Lucy is the sister of Emma's father."},
+ {type:"fix",q:"Fix the sentence:",context:"This is theirs family photo.",aText:"This is their family photo.",h:"A noun follows the possessive word."},
+ {type:"team",q:"FINAL TEAM ATTACK",context:"Maya is Ben's daughter. Ben is Laura's brother.",speaking:"🔵 Player 1: What is Laura to Maya?\n🟣 Player 2: Make a sentence about Laura using HER or HERS.",aText:"Player 1: Laura is Maya's aunt. Player 2 example: Her family is big. / The book is hers.",h:"Laura is the sister of Maya's father."},
+ {type:"say",q:"My sister and I have the same parents. Their house is also ____.",aText:"ours",h:"The house belongs to us, and there is no noun after the blank."},
+ {type:"mc",q:"Choose the correct sentence.",o:["This bedroom is their.","This is theirs bedroom.","This bedroom is theirs."],a:2,h:"Use THEIRS when there is no noun after it."}
+];
+
+const teacherPrompts=[
+ {type:"teacher",q:"Teacher Challenge",speaking:"Choose one player and ask: “Tell me about two people in your family.”\nAsk one follow-up question.",aText:"Teacher decides whether the answer is complete.",h:"Encourage a full sentence, e.g. “My sister is...”"},
+ {type:"teacher",q:"Teacher vs Players",speaking:"Say: “This notebook belongs to me.”\nPlayers must transform the sentence using a possessive pronoun.",aText:"The notebook is yours.",h:"The notebook belongs to the teacher, so from the students' perspective it is YOURS."},
+ {type:"teacher",q:"Teacher Challenge",speaking:"Ask both players: “What is one difference between HER and HERS?”",aText:"HER is used before a noun; HERS replaces the noun.",h:"Example: her book / the book is hers."}
+];
+
+/* ---------- World Data ---------- */
+const worlds=[
+ {name:"Family Forest",banner:"WORLD 1 — FAMILY FOREST",theme:"forest",length:3150,challengeXs:[700,1290,1980,2520]},
+ {name:"Relationship Village",banner:"WORLD 2 — RELATIONSHIP VILLAGE",theme:"village",length:3100,challengeXs:[650,1300,1950,2580]},
+ {name:"Possessive Castle",banner:"WORLD 3 — POSSESSIVE CASTLE",theme:"castle",length:3100,challengeXs:[620,1280,1940,2580]},
+ {name:"Boss Arena",banner:"FINAL BOSS — GRAMMAR GUARDIAN",theme:"boss",length:1700,challengeXs:[420,700,980,1260,1500]}
+];
+
+const levelPlatforms={
+ forest:[
+  [0,610,720,110],
+  [760,560,260,40],
+  [1060,505,220,40],
+  [1315,565,330,40],
+  [1690,515,260,40],
+  [1995,570,390,40],
+  [2430,520,250,40],
+  [2720,575,220,40],
+  [2970,610,220,110]
+ ],
+ village:[
+  [0,610,520,110],[560,545,330,35],[940,600,420,120],[1410,525,290,35],[1750,590,370,40],[2170,530,320,35],[2540,585,370,40],[2960,610,250,110]
+ ],
+ castle:[
+  [0,610,520,110],[560,540,260,35],[875,470,230,35],[1160,565,310,40],[1520,500,230,35],[1810,590,370,40],[2235,510,290,35],[2580,575,350,40],[2970,610,220,110]
+ ],
+ boss:[
+  [0,610,1700,110],[280,500,180,30],[700,470,190,30],[1120,500,190,30]
+ ]
+};
+
+/* ---------- Game State ---------- */
+let state, player, keys={}, last=0, gameRunning=false, paused=true, currentChallenge=null, challengeBusy=false;
+function shuffle(arr){return arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(x=>x[1])}
+function pick(arr,n){return shuffle(arr).slice(0,n)}
+function buildDecks(){
+  return [pick(FAMILY,4),pick(REL,4),pick(POSS,4),shuffle([...MIXED]).slice(0,5)];
+}
+function resetGame(newQs=true){
+  state={
+    world:0,score:0,gems:0,lives:3,checkpointX:60,
+    completedChallenges:new Set(), challengeCursor:0,
+    correct:0,wrong:0,speaking:0,bossHealth:5, roleIndex:0,
+    decks:newQs?buildDecks():(state?.decks||buildDecks()),
+    teacherUsed:0, collectibles:new Set(), started:false
+  };
+  player={x:80,y:450,w:34,h:52,vx:0,vy:0,onGround:false,facing:1,anim:0};
+  updateHUD();
+}
+resetGame(true);
+
+/* ---------- Utilities ---------- */
+function updateHUD(){
+ scoreEl.textContent=state.score;
+ gemsEl.textContent=state.gems;
+ livesEl.textContent="❤️".repeat(Math.max(0,state.lives)) || "♡";
+ worldNameEl.textContent=worlds[state.world].name;
+}
+function roleForNext(){
+ const roles=["p1","p2","team"];
+ const r=roles[state.roleIndex%roles.length]; state.roleIndex++; return r;
+}
+function roleMeta(r){
+ return {
+  p1:["🔵 PLAYER 1","role-p1"],
+  p2:["🟣 PLAYER 2","role-p2"],
+  team:["🤝 TEAM CHALLENGE","role-team"],
+  teacher:["🎓 TEACHER CHALLENGE","role-teacher"]
+ }[r];
+}
+function typeName(t){
+ return ({mc:"MULTIPLE CHOICE",say:"SAY IT!",fix:"FIX THE SENTENCE",tree:"WHO IS WHO?",team:"TEAM CHALLENGE",teacher:"TEACHER CHALLENGE"}[t]||"CHALLENGE");
+}
+function worldDeck(){return state.decks[state.world]||[]}
+function showBanner(txt){
+ worldBanner.textContent=txt;worldBanner.classList.add("show");
+ setTimeout(()=>worldBanner.classList.remove("show"),1700);
+}
+function currentPlatforms(){return levelPlatforms[worlds[state.world].theme]}
+function collideRect(a,b){return a.x<b[0]+b[2]&&a.x+a.w>b[0]&&a.y<b[1]+b[3]&&a.y+a.h>b[1]}
+
+/* ---------- Drawing ---------- */
+function roundedRect(x,y,w,h,r,fill){
+ ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fillStyle=fill;ctx.fill();
+}
+function drawBackground(theme,cam){
+ const W=canvas.width,H=canvas.height,t=performance.now()/1000;
+ const pal={
+   forest:["#BDE2FF","#FFD6E7","#CBBCEB"],
+   village:["#CDEAFF","#FFE0EA","#D7C5EC"],
+   castle:["#C8C0E8","#F0C7DA","#9E89B8"],
+   boss:["#9A83B4","#D1A6C5","#665078"]
+ }[theme]||["#BDE2FF","#FFD6E7","#CBBCEB"];
+ const g=ctx.createLinearGradient(0,0,0,H);
+ g.addColorStop(0,pal[0]);g.addColorStop(.56,pal[1]);g.addColorStop(1,pal[2]);
+ ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+ // minimalist parallax hill silhouettes
+ const hillCols=theme==="boss"?["#8D78A2","#78648C","#645375"]:
+                  theme==="castle"?["#B09FC6","#9682AD","#7A698F"]:
+                  ["#B7C6CD","#9CB3BA","#819DA5"];
+ for(let layer=0;layer<3;layer++){
+   const speed=[.06,.12,.2][layer],base=355+layer*72;
+   ctx.fillStyle=hillCols[layer];
+   ctx.beginPath();ctx.moveTo(-120,H);
+   for(let x=-260;x<W+400;x+=240){
+     let px=x-((cam*speed)%240);
+     ctx.quadraticCurveTo(px+120,base-70-layer*10,px+240,base);
+   }
+   ctx.lineTo(W,H);ctx.closePath();ctx.fill();
+ }
+
+ // animated clouds
+ if(IMG.cloud.complete){
+   for(let i=0;i<6;i++){
+     const x=((i*270+t*(9+i*1.2)-cam*.03)%(W+500))-180;
+     const y=60+(i%3)*54;
+     ctx.drawImage(IMG.cloud,Math.round(x),Math.round(y),72,28);
+   }
+ }
+ // animated birds
+ if(IMG.bird.complete){
+   for(let i=0;i<4;i++){
+     const x=((i*390+t*(24+i*2)-cam*.018)%(W+520))-180;
+     const y=120+(i%2)*64+Math.sin(t*2+i)*4;
+     ctx.drawImage(IMG.bird,Math.round(x),Math.round(y),20,10);
+   }
+ }
+}
+function drawDecor(theme,cam){
+ const t=performance.now()/1000;
+ ctx.save();ctx.translate(-cam,0);
+
+ if(theme==="forest"){
+   // distant soft tree line
+   ctx.globalAlpha=.28;
+   for(let x=260;x<3300;x+=280){
+     ctx.fillStyle="#88A0AA";
+     ctx.fillRect(x,435,18,175);
+     ctx.fillStyle="#A9B8BF";
+     ctx.fillRect(x-28,405,76,40);
+     ctx.fillRect(x-8,382,58,34);
+   }
+   ctx.globalAlpha=1;
+
+   // anchored hero trees
+   if(IMG.tree.complete){
+     ctx.drawImage(IMG.tree,60,420,150,190);
+     ctx.drawImage(IMG.tree,1940,380,150,190);
+     ctx.drawImage(IMG.tree,2705,425,118,150);
+   }
+
+   // anchored distant castle at level end
+   if(IMG.castle.complete){
+     ctx.drawImage(IMG.castle,2940,420,190,190);
+   }
+
+   // ground path to castle
+   ctx.fillStyle="#D7C1DD";
+   for(let x=2948;x<3130;x+=25)ctx.fillRect(x,592,18,8);
+
+   // shrub clusters
+   const shrubs=[
+     [265,590],[475,590],[790,540],[1100,485],[1360,545],
+     [1740,495],[2035,550],[2260,550],[2470,500],[2770,555],[3030,590]
+   ];
+   for(const [x,y] of shrubs){
+     ctx.fillStyle="#67B878";ctx.fillRect(x,y,30,14);
+     ctx.fillStyle="#93D993";ctx.fillRect(x+4,y-6,20,8);
+     ctx.fillStyle="#F0A4C5";ctx.fillRect(x+7,y-10,5,5);
+     ctx.fillStyle="#FFDFA3";ctx.fillRect(x+8,y-9,2,2);
+   }
+
+   // little flower tufts, sparse
+   const flowers=[[350,602],[910,552],[1210,497],[1510,557],[2150,562],[2570,512],[2860,567]];
+   for(const [x,y] of flowers){
+     ctx.fillStyle="#5E9A67";ctx.fillRect(x,y-10,3,10);
+     ctx.fillStyle="#F19CC0";ctx.fillRect(x-3,y-14,9,5);
+     ctx.fillStyle="#FFF1B1";ctx.fillRect(x,y-13,3,3);
+   }
+
+   // water gap
+   ctx.fillStyle="#87CAE6";ctx.fillRect(1290,602,350,8);
+   ctx.fillStyle="#CDEEFF";
+   for(let x=1300;x<1630;x+=40)ctx.fillRect(x,604,20,2);
+
+   // lanterns attached to platforms
+   const lanterns=[[615,523],[1915,478],[2675,488]];
+   for(const [x,y] of lanterns){
+     ctx.fillStyle="#6F526C";ctx.fillRect(x,y,4,38);
+     ctx.fillStyle="#F6D06D";ctx.fillRect(x-5,y+4,14,14);
+     ctx.fillStyle="#FFF1B1";ctx.fillRect(x-2,y+7,8,8);
+   }
+
+   // falling petals
+   ctx.fillStyle="#F5B1CE";
+   for(let i=0;i<18;i++){
+     const x=90+(i*181)%3080;
+     const y=235+((t*18+i*43)%280);
+     ctx.fillRect(Math.round(x),Math.round(y),4,4);
+   }
+
+ } else if(theme==="village"){
+   for(let x=140;x<3300;x+=620){
+     const gy=610;
+     ctx.fillStyle="#F5DEE8";ctx.fillRect(x,gy-178,220,178);
+     ctx.fillStyle="#A38ABF";
+     ctx.beginPath();ctx.moveTo(x-10,gy-178);ctx.lineTo(x+110,gy-258);ctx.lineTo(x+230,gy-178);ctx.closePath();ctx.fill();
+     ctx.fillStyle="#846176";ctx.fillRect(x+88,gy-90,44,90);
+     ctx.fillStyle="#C9E6F0";ctx.fillRect(x+28,gy-145,40,36);ctx.fillRect(x+154,gy-145,40,36);
+     ctx.fillStyle="#EFA7C5";ctx.fillRect(x+18,gy-62,28,7);ctx.fillRect(x+174,gy-62,28,7);
+     // planted flower beds
+     ctx.fillStyle="#6DBA7D";ctx.fillRect(x+10,gy-18,58,10);ctx.fillRect(x+152,gy-18,58,10);
+     ctx.fillStyle="#F5A7C9";ctx.fillRect(x+18,gy-24,5,5);ctx.fillRect(x+174,gy-24,5,5);
+   }
+
+ } else {
+   ctx.fillStyle=theme==="castle"?"#746485":"#514161";
+   for(let x=0;x<3300;x+=220){
+     ctx.fillRect(x,310,200,300);
+     ctx.fillStyle=theme==="castle"?"#9A84AD":"#6A557B";
+     ctx.fillRect(x+20,334,36,34);
+     ctx.fillRect(x+118,382,42,48);
+     ctx.fillStyle=theme==="castle"?"#746485":"#514161";
+   }
+
+   for(let x=130;x<3300;x+=420){
+     ctx.fillStyle="#6E526C";ctx.fillRect(x,436,5,40);
+     ctx.fillStyle="#F4D06B";ctx.fillRect(x-5,425,15,15);
+     ctx.fillStyle="#FFF1A9";ctx.fillRect(x-2,428,9,9);
+   }
+ }
+ ctx.restore();
+}
+function drawPlatforms(cam){
+ const theme=worlds[state.world].theme;
+ ctx.save();
+ ctx.translate(-cam,0);
+
+ const img=(theme==="forest"||theme==="village")?IMG.tile:IMG.stone;
+
+ for(const p of currentPlatforms()){
+   const [x,y,w,h]=p;
+
+   if(theme==="forest"||theme==="village"){
+     ctx.fillStyle="#775068";ctx.fillRect(x,y,w,h);
+     ctx.fillStyle="#79C989";ctx.fillRect(x,y,w,12);
+     ctx.fillStyle="#AFEBA9";ctx.fillRect(x,y,w,4);
+   }else{
+     ctx.fillStyle="#625370";ctx.fillRect(x,y,w,h);
+     ctx.fillStyle="#9A86AE";ctx.fillRect(x,y,w,8);
+   }
+
+   if(img.complete && img.naturalWidth>0){
+     for(let tx=0;tx<w;tx+=64){
+       for(let ty=0;ty<h;ty+=64){
+         const dw=Math.min(64,w-tx),dh=Math.min(64,h-ty);
+         ctx.drawImage(img,0,0,dw,dh,x+tx,y+ty,dw,dh);
+       }
+     }
+   }
+
+   if(theme==="forest"||theme==="village"){
+     ctx.fillStyle="#B4EDAE";ctx.fillRect(x,y,w,4);
+     ctx.fillStyle="#70BE7D";ctx.fillRect(x,y+5,w,5);
+     // tiny grass tufts
+     for(let gx=x+18;gx<x+w-10;gx+=86){
+       ctx.fillStyle="#5BAA70";ctx.fillRect(gx,y+9,3,7);ctx.fillRect(gx+4,y+7,3,9);
+     }
+   }else{
+     ctx.fillStyle="#A48FBA";ctx.fillRect(x,y,w,5);
+   }
+ }
+ ctx.restore();
+}
+function drawCollectibles(cam){
+ const W=worlds[state.world].length,t=performance.now()/1000;
+ ctx.save();ctx.translate(-cam,0);
+ for(let i=0;i<16;i++){
+  const x=180+i*((W-300)/16), y=440-(i%3)*70 + Math.sin(t*2+i)*4;
+  const id=`${state.world}-${i}`; if(state.collectibles.has(id))continue;
+  ctx.save();ctx.translate(Math.round(x),Math.round(y));
+  const main=i%5===0?"#B987EF":"#ED7EAF", light=i%5===0?"#E7D3FF":"#FFD5E5";
+  ctx.fillStyle=main;ctx.beginPath();ctx.moveTo(0,-13);ctx.lineTo(12,-3);ctx.lineTo(7,11);ctx.lineTo(-7,11);ctx.lineTo(-12,-3);ctx.closePath();ctx.fill();
+  ctx.fillStyle=light;ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(5,-3);ctx.lineTo(0,4);ctx.lineTo(-5,-3);ctx.closePath();ctx.fill();
+  ctx.restore();
+ }
+ ctx.restore();
+}
+function drawGate(cam){
+ const w=worlds[state.world],x=w.length-150;
+ ctx.save();ctx.translate(-cam,0);
+ ctx.fillStyle="#76506D";ctx.fillRect(x,450,18,160);ctx.fillRect(x+96,450,18,160);ctx.fillRect(x,450,114,16);
+ if(IMG.flag.complete)ctx.drawImage(IMG.flag,x+38,468,38,68);
+ ctx.fillStyle="#F4D06F";ctx.fillRect(x+49,540,16,20);ctx.fillRect(x+53,534,8,7);
+ ctx.restore();
+}
+function drawBoss(cam){
+ if(state.world!==3)return;
+ ctx.save();ctx.translate(-cam,0);
+ const bx=1450,by=390,t=performance.now()/1000;
+ const bob=Math.sin(t*2)*4;
+ ctx.fillStyle="#8F668E";ctx.fillRect(bx-62,by-45+bob,124,94);
+ ctx.fillStyle="#B987C3";ctx.fillRect(bx-52,by-55+bob,104,22);
+ ctx.fillStyle="#FFF3F8";ctx.fillRect(bx-30,by-16+bob,16,16);ctx.fillRect(bx+14,by-16+bob,16,16);
+ ctx.fillStyle="#4B3658";ctx.fillRect(bx-24,by-10+bob,6,7);ctx.fillRect(bx+18,by-10+bob,6,7);
+ ctx.fillStyle="#F6CE66";ctx.fillRect(bx-44,by-73+bob,88,14);
+ ctx.fillRect(bx-44,by-88+bob,18,20);ctx.fillRect(bx-9,by-96+bob,18,28);ctx.fillRect(bx+27,by-88+bob,17,20);
+ ctx.fillStyle="#FFF5FA";ctx.font="900 18px 'Courier New'";ctx.fillText("GRAMMAR GUARDIAN",bx-118,by-112+bob);
+ ctx.restore();
+}
+function drawPlayer(cam){
+ const x=Math.round(player.x-cam),y=Math.round(player.y);
+ let frame=0;
+ if(!player.onGround)frame=3;
+ else if(Math.abs(player.vx)>1)frame=1+((Math.floor(performance.now()/160))%2);
+ ctx.save();
+ if(player.facing<0){
+   ctx.translate(x+player.w,y);ctx.scale(-1,1);ctx.drawImage(IMG.cat,frame*40,0,40,48,0,0,40,48);
+ }else{
+   ctx.drawImage(IMG.cat,frame*40,0,40,48,x,y,40,48);
+ }
+ ctx.restore();
+}
+function render(){
+ const cam=Math.max(0,Math.min(player.x-canvas.width*.32,worlds[state.world].length-canvas.width));
+ drawBackground(worlds[state.world].theme,cam);
+ drawDecor(worlds[state.world].theme,cam);
+ drawPlatforms(cam);drawCollectibles(cam);drawGate(cam);drawBoss(cam);drawPlayer(cam);
+}
+
+/* ---------- Physics & Progress ---------- */
+function update(dt){
+ if(!gameRunning||paused)return;
+ const speed=260, gravity=1650, jump=650;
+ player.vx=0;
+ if(keys.ArrowLeft||keys.KeyA){player.vx=-speed;player.facing=-1}
+ if(keys.ArrowRight||keys.KeyD){player.vx=speed;player.facing=1}
+ player.vy+=gravity*dt;
+ player.x+=player.vx*dt;
+ player.x=Math.max(0,Math.min(player.x,worlds[state.world].length-player.w));
+
+ const prevBottom=player.y+player.h;
+ player.y+=player.vy*dt;player.onGround=false;
+ for(const p of currentPlatforms()){
+   if(player.vy>=0 && player.x+player.w>p[0] && player.x<p[0]+p[2] && prevBottom<=p[1]+10 && player.y+player.h>=p[1]){
+     player.y=p[1]-player.h;player.vy=0;player.onGround=true;
+   }
+ }
+ if(player.y>760){
+   player.x=state.checkpointX;player.y=430;player.vx=0;player.vy=0;
+   showToast("↩ Back to checkpoint");beep(180,.1,"sawtooth");
+ }
+ collectThings();
+ checkChallengeTriggers();
+ if(player.x>worlds[state.world].length-170 && !challengeBusy){
+   if(state.world<3) nextWorld(); else if(state.bossHealth<=0) finishGame();
+ }
+}
+function jump(){
+ if(!gameRunning||paused)return;
+ if(player.onGround){player.vy=-650;player.onGround=false;beep(320,.05,"square",.025)}
+}
+function collectThings(){
+ const W=worlds[state.world].length;
+ for(let i=0;i<16;i++){
+  const x=180+i*((W-300)/16),y=440-(i%3)*70,id=`${state.world}-${i}`;
+  if(state.collectibles.has(id))continue;
+  const dx=(player.x+player.w/2)-x,dy=(player.y+player.h/2)-y;
+  if(dx*dx+dy*dy<32*32){
+   state.collectibles.add(id);state.gems++;state.score+=i%5===0?25:10;beep(760,.05);updateHUD();
+  }
+ }
+}
+function checkChallengeTriggers(){
+ const xs=worlds[state.world].challengeXs;
+ for(let i=0;i<xs.length;i++){
+   const id=`w${state.world}c${i}`;
+   if(!state.completedChallenges.has(id)&&player.x>=xs[i]){
+     state.completedChallenges.add(id);
+     state.checkpointX=Math.max(60,xs[i]-90);
+     showToast("🚩 CHECKPOINT!");beep(540,.08);setTimeout(()=>openChallenge(i),250);
+     break;
+   }
+ }
+}
+function nextWorld(){
+ state.world++;state.checkpointX=60;player.x=70;player.y=430;player.vx=0;player.vy=0;
+ updateHUD();showBanner(worlds[state.world].banner);beep(620,.12);
+}
+function goNextCheckpoint(){
+ const xs=worlds[state.world].challengeXs;
+ const next=xs.find(x=>x>player.x+60);
+ if(next){player.x=Math.max(30,next-100);player.y=430;state.checkpointX=player.x;showToast("🚩 Moved to next checkpoint")}
+ else if(state.world<3)nextWorld();
+}
+
+/* ---------- Challenge UI ---------- */
+function setRole(r){
+ const [label,cls]=roleMeta(r);roleLabel.textContent=label;roleBanner.className=`roleBanner ${cls}`;
+}
+function setFeedback(text,kind=""){
+ feedbackEl.textContent=text;feedbackEl.className=`feedback ${kind}`;
+}
+function clearChallengeUI(){
+ optionsEl.innerHTML="";actionRow.innerHTML="";setFeedback("");
+ contextEl.classList.add("hidden");treeEl.classList.add("hidden");speakingEl.classList.add("hidden");
+ bossWrap.classList.toggle("hidden",state.world!==3);
+ if(state.world===3)updateBossUI();
+}
+function openChallenge(index, forced=null){
+ paused=true;challengeBusy=true;challengeModal.classList.remove("hidden");
+ clearChallengeUI();
+ let q=forced || worldDeck()[index % worldDeck().length];
+ let role= q.type==="teacher"?"teacher":roleForNext();
+ // Insert 2 teacher moments in non-boss worlds
+ if(!forced && state.world<3 && state.teacherUsed<2 && ((state.world===0&&index===2)||(state.world===2&&index===1))){
+   q=teacherPrompts[state.teacherUsed++];role="teacher";
+ }
+ currentChallenge={q,role,index,attempts:0,revealed:false};
+ setRole(role);typeLabel.textContent=typeName(q.type);questionEl.textContent=q.q;
+ if(q.context){contextEl.textContent=q.context;contextEl.classList.remove("hidden")}
+ if(q.people){
+   treeEl.innerHTML=q.people.map(p=>`<div class="person"><b>${p[0]}</b><span>${p[1]}</span></div>`).join("");
+   treeEl.classList.remove("hidden");
+ }
+ if(q.speaking){speakingEl.textContent=q.speaking;speakingEl.classList.remove("hidden")}
+ if(q.type==="mc") renderMC(q);
+ else renderTeacherJudged(q);
+}
+function renderMC(q){
+ q.o.forEach((opt,i)=>{
+  const b=document.createElement("button");b.className="option";b.textContent=`${String.fromCharCode(65+i)}) ${opt}`;
+  b.onclick=()=>answerMC(i,b);optionsEl.appendChild(b);
+ });
+}
+function answerMC(i,btn){
+ const q=currentChallenge.q;if(currentChallenge.resolved)return;
+ if(i===q.a){
+   [...optionsEl.children].forEach(x=>x.disabled=true);btn.classList.add("correct");
+   success("Correct! Nice teamwork.");
+ }else{
+   btn.classList.add("wrong");currentChallenge.attempts++;state.wrong++;
+   beep(180,.09,"sawtooth");
+   if(currentChallenge.attempts===1){setFeedback("Not quite! Talk about it and try again.","bad");btn.disabled=true}
+   else{setFeedback("💡 "+q.h,"hint");btn.disabled=true}
+ }
+}
+function renderTeacherJudged(q){
+ if(q.type==="say"||q.type==="fix"||q.type==="tree"){
+  speakingEl.textContent=q.type==="fix"?"Say the corrected sentence aloud before revealing the answer.":"Answer aloud before the teacher reveals the answer.";
+  speakingEl.classList.remove("hidden");
+ }
+ const reveal=document.createElement("button");reveal.className="smallBtn secondary";reveal.textContent="👁 REVEAL ANSWER";
+ reveal.onclick=()=>revealAnswer();
+ const accept=document.createElement("button");accept.className="smallBtn primary";accept.textContent=q.type==="team"?"⚔️ TEAM ATTACK!":"✅ ACCEPT";
+ accept.onclick=()=>success(q.type==="team"?"Powerful team attack!":"Accepted!");
+ const retry=document.createElement("button");retry.className="smallBtn danger";retry.textContent="🔄 TRY AGAIN";
+ retry.onclick=()=>{state.wrong++;currentChallenge.attempts++;setFeedback("Try once more. Ask for a hint if needed.","bad");beep(190,.08)};
+ actionRow.append(reveal,accept,retry);
+}
+function revealAnswer(){
+ const q=currentChallenge?.q;if(!q)return;
+ currentChallenge.revealed=true;
+ setFeedback("✅ Suggested answer: "+(q.aText||q.o?.[q.a]||""),"good");beep(540,.06);
+}
+function success(msg){
+ if(currentChallenge?.resolved)return;
+ currentChallenge.resolved=true;
+ const q=currentChallenge.q;
+ state.correct++;state.score+=100;
+ if(!currentChallenge.revealed&&currentChallenge.attempts===0)state.score+=50;
+ if(["say","fix","tree","team","teacher"].includes(q.type)){state.speaking++;state.score+=50}
+ if(state.world===3){
+   state.bossHealth=Math.max(0,state.bossHealth-1);state.score+=100;updateBossUI();
+   beep(140,.07,"square");setTimeout(()=>beep(110,.09,"square"),80);
+ }
+ updateHUD();setFeedback("✨ "+msg,"good");beep(680,.08);
+ setTimeout(closeChallenge,650);
+}
+function closeChallenge(){
+ challengeModal.classList.add("hidden");currentChallenge=null;challengeBusy=false;paused=false;
+ if(state.world===3&&state.bossHealth<=0){showToast("👑 Guardian defeated! Reach the exit.");beep(880,.18)}
+}
+function updateBossUI(){
+ bossHearts.textContent="❤️".repeat(state.bossHealth)+"♡".repeat(5-state.bossHealth);
+ bossFill.style.width=(state.bossHealth/5*100)+"%";
+}
+function teacherHint(){if(currentChallenge)setFeedback("💡 "+(currentChallenge.q.h||"Encourage the students to explain their choice."),"hint")}
+function teacherReveal(){if(currentChallenge)revealAnswer()}
+function skipChallenge(){if(currentChallenge){setFeedback("Challenge skipped.","hint");setTimeout(closeChallenge,250)}}
+function newQuestion(){
+ if(!currentChallenge)return;
+ const pool=state.world===0?FAMILY:state.world===1?REL:state.world===2?POSS:MIXED;
+ openChallenge(currentChallenge.index,shuffle(pool)[0]);
+}
+
+/* ---------- Finish ---------- */
+function finishGame(){
+ gameRunning=false;paused=true;hud.classList.add("hidden");victoryScreen.classList.remove("hidden");
+ const total=state.correct+state.wrong,acc=total?Math.round(state.correct/total*100):100;
+ $("#finalScore").textContent=state.score;$("#finalAcc").textContent=acc+"%";$("#finalGems").textContent=state.gems;
+ $("#finalLives").textContent=state.lives;$("#finalSpeaking").textContent=state.speaking;$("#finalCorrect").textContent=state.correct;
+ $("#rank").textContent=acc>=90?"👑 FAMILY MASTERS":acc>=70?"⭐ FAMILY ADVENTURERS":"🌱 FAMILY EXPLORERS";
+ confettiBurst();beep(660,.12);setTimeout(()=>beep(880,.18),140);
+}
+function confettiBurst(){
+ const colors=["#f2b843","#6bb7d8","#9b6ad6","#6dad6c","#e57070"];
+ let bits=Array.from({length:140},()=>({x:Math.random()*canvas.width,y:-30-Math.random()*300,vx:(Math.random()-.5)*160,vy:120+Math.random()*260,c:colors[(Math.random()*colors.length)|0],r:3+Math.random()*6}));
+ let t0=performance.now();
+ function step(t){
+  const dt=Math.min(.03,(t-t0)/1000);t0=t;render();
+  bits.forEach(b=>{b.x+=b.vx*dt;b.y+=b.vy*dt;b.vy+=180*dt;ctx.fillStyle=b.c;ctx.fillRect(b.x,b.y,b.r,b.r*1.6)});
+  bits=bits.filter(b=>b.y<760);if(bits.length)requestAnimationFrame(step);
+ }
+ requestAnimationFrame(step);
+}
+
+/* ---------- Controls ---------- */
+addEventListener("keydown",e=>{
+ keys[e.code]=true;keys[e.key]=true;
+ if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault();
+ if(["Space","ArrowUp","KeyW"].includes(e.code)&&!e.repeat)jump();
+});
+addEventListener("keyup",e=>{keys[e.code]=false;keys[e.key]=false});
+document.querySelectorAll(".touchBtn").forEach(b=>{
+ const k=b.dataset.key;
+ const down=e=>{e.preventDefault();keys[k]=true;if(k==="Space")jump()};
+ const up=e=>{e.preventDefault();keys[k]=false};
+ b.addEventListener("pointerdown",down);b.addEventListener("pointerup",up);b.addEventListener("pointercancel",up);
+});
+
+$("#startBtn").onclick=()=>{startScreen.classList.add("hidden");hud.classList.remove("hidden");gameRunning=true;paused=false;state.started=true;showBanner(worlds[0].banner);beep(520,.08)};
+$("#howBtn").onclick=()=>{startScreen.classList.add("hidden");howScreen.classList.remove("hidden")};
+$("#backBtn").onclick=()=>{howScreen.classList.add("hidden");startScreen.classList.remove("hidden")};
+$("#teacherBtn").onclick=()=>{paused=true;teacherPanel.classList.remove("hidden")};
+$("#closeTeacher").onclick=()=>{teacherPanel.classList.add("hidden");paused=!!currentChallenge};
+teacherPanel.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{
+ const a=b.dataset.act;
+ if(a==="resume"){teacherPanel.classList.add("hidden");paused=!!currentChallenge}
+ if(a==="skip")skipChallenge();
+ if(a==="newq")newQuestion();
+ if(a==="hint")teacherHint();
+ if(a==="reveal")teacherReveal();
+ if(a==="life"){state.lives=Math.min(5,state.lives+1);updateHUD();showToast("❤️ Life added")}
+ if(a==="points"){state.score+=100;updateHUD();showToast("+100 points")}
+ if(a==="checkpoint"){teacherPanel.classList.add("hidden");paused=false;goNextCheckpoint()}
+});
+$("#playAgainBtn").onclick=()=>{victoryScreen.classList.add("hidden");resetGame(false);hud.classList.remove("hidden");gameRunning=true;paused=false;showBanner(worlds[0].banner)};
+$("#newQuestionsBtn").onclick=()=>{victoryScreen.classList.add("hidden");resetGame(true);hud.classList.remove("hidden");gameRunning=true;paused=false;showBanner(worlds[0].banner)};
+
+/* ---------- Main loop ---------- */
+function loop(ts){
+ const dt=Math.min(.032,(ts-last)/1000||0);last=ts;update(dt);render();requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
